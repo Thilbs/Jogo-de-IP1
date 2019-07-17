@@ -1,0 +1,539 @@
+//Using SDL and standard IO
+#include <SDL.h>
+#include <SDL_image.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
+
+
+//dimenssões da janela principal
+const int SCREEN_WIDTH = 1280;
+const int SCREEN_HEIGHT = 720;
+
+
+//criação das variaveis de imagens e janelas
+SDL_Window* janela = NULL;
+SDL_Surface* superficiePrincipal = NULL;
+SDL_Surface* background = NULL;
+SDL_Renderer* window_Renderer = NULL;
+SDL_Texture* gTexture = NULL;
+SDL_Texture* background_cenario = NULL;
+
+SDL_Texture* detetive_costa_2 = NULL;
+SDL_Texture* detetive_costa_3 = NULL;
+SDL_Texture* detetive_costa_4 = NULL;
+
+SDL_Texture* detetive_frente_2 = NULL;
+SDL_Texture* detetive_frente_3 = NULL;
+SDL_Texture* detetive_frente_4 = NULL;
+
+SDL_Texture* detetive_lado_esquerdo_2 = NULL;
+SDL_Texture* detetive_lado_esquerdo_3 = NULL;
+SDL_Texture* detetive_lado_esquerdo_4 = NULL;
+SDL_Texture* detetive_lado_direito_2 = NULL;
+SDL_Texture* detetive_lado_direito_3 = NULL;
+SDL_Texture* detetive_lado_direito_4 = NULL;
+SDL_Texture* texto = NULL;
+
+//-----------------------------------INICIO DAS FUNÇÕES-------------------------------------------------//
+//-----------------------------------------------------------------------------------------------------//
+
+//inicializa tudo
+bool init();
+
+//fecha tudo
+void fechar();
+
+
+
+
+bool init()
+{
+	//inicializando flag
+	bool sucesso = true;
+
+	//inicializa o uso do SDL
+	SDL_Init(SDL_INIT_EVERYTHING);
+
+	//inicializa o uso de arquivos PNG
+	SDL_Init(IMG_INIT_PNG);
+
+	//cria a janela
+	janela = SDL_CreateWindow("casa 4", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+
+	superficiePrincipal = SDL_GetWindowSurface(janela);
+
+	//cria a renderização para a tela principal
+	window_Renderer = SDL_CreateRenderer(janela, -1, SDL_RENDERER_ACCELERATED);
+
+	//inicializa a cor de renderização
+	SDL_SetRenderDrawColor(window_Renderer, 255, 255, 255, 255);
+
+	return sucesso;
+}
+
+void fechar()
+{
+	//libera a superficie
+	SDL_DestroyTexture(gTexture);
+	gTexture = NULL;
+
+	//destroi a janela
+	SDL_DestroyRenderer(window_Renderer);
+	SDL_DestroyWindow(janela);
+	janela = NULL;
+	window_Renderer = NULL;
+
+	//encerra o uso do tipo PNG
+	IMG_Quit();
+
+	//encerra o SDL
+	SDL_Quit();
+}
+
+SDL_Texture* load_texture(const char* image_Path, SDL_Renderer* window_Renderer)
+{
+	SDL_Texture* new_Texture = NULL;
+	SDL_Surface* loaded_Surface = NULL;
+
+	loaded_Surface = IMG_Load(image_Path);
+
+	new_Texture = SDL_CreateTextureFromSurface(window_Renderer, loaded_Surface);
+
+	SDL_FreeSurface(loaded_Surface);
+
+	return new_Texture;
+}
+
+void coloca_fundo_preto(SDL_Renderer* window_Renderer)
+{
+	SDL_Texture* fundo_Preto_Texture = load_texture("imagens/fundo preto.png", window_Renderer);
+
+	SDL_RenderCopy(window_Renderer, fundo_Preto_Texture, NULL, NULL);
+
+	SDL_DestroyTexture(fundo_Preto_Texture);
+	fundo_Preto_Texture = NULL;
+}
+
+
+//-----------------------------------FIM DAS FUNÇÕES---------------------------------------------------//
+//-----------------------------------------------------------------------------------------------------//
+
+
+int main(int argc, char* args[])
+{
+	coloca_fundo_preto(window_Renderer);
+
+	int cenario_Width = 192;
+	int cenario_Height = 144;
+	int amplificador = 3;
+	int lado = 16;
+
+	SDL_Rect cenario_Rect;
+	cenario_Rect.x = 1280 / 2 - cenario_Width / 2 * amplificador;
+	cenario_Rect.y = 720 / 2 - cenario_Height / 2 * amplificador;
+	cenario_Rect.w = cenario_Width * amplificador;
+	cenario_Rect.h = cenario_Height * amplificador;
+
+	SDL_RenderSetViewport(window_Renderer, &cenario_Rect);
+
+	SDL_Rect grid[9][12];
+
+	for (int linha = 0; linha < 9; linha++)
+	{
+		for (int coluna = 0; coluna < 12; coluna++)
+		{
+			grid[linha][coluna].x = lado * amplificador * coluna;
+			grid[linha][coluna].y = lado * amplificador * linha;
+			grid[linha][coluna].w = lado * amplificador;
+			grid[linha][coluna].h = lado * amplificador;
+		}
+	}
+
+	char cenario[9][12] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+									  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+									  ' ', ' ', '_', '_', '_', '_', ' ', '_', ' ', ' ', ' ', ' ',
+									  ' ', '_', '_', '_', '_', '_', ' ', ' ', ' ', '_', '_', '_',
+									  '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_',
+									  ' ', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_',
+									  ' ', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_',
+									  ' ', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_',
+									  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+
+
+	SDL_Texture* background_cenario = load_texture("imagens/base organizado.png", window_Renderer);
+	SDL_Texture* detetive_costa_2 = load_texture("imagens/detetive costa 2.png", window_Renderer);
+	SDL_Texture* detetive_costa_3 = load_texture("imagens/detetive costa 3.png", window_Renderer);
+	SDL_Texture* detetive_costa_4 = load_texture("imagens/detetive costa 4.png", window_Renderer);
+
+	SDL_Texture* detetive_frente_2 = load_texture("imagens/detetive frente 2.png", window_Renderer);
+	SDL_Texture* detetive_frente_3 = load_texture("imagens/detetive frente 3.png", window_Renderer);
+	SDL_Texture* detetive_frente_4 = load_texture("imagens/detetive frente 4.png", window_Renderer);
+
+	SDL_Texture* detetive_lado_esquerdo_2 = load_texture("imagens/detetive lado esquerdo 2.png", window_Renderer);
+	SDL_Texture* detetive_lado_esquerdo_3 = load_texture("imagens/detetive lado esquerdo 3.png", window_Renderer);
+	SDL_Texture* detetive_lado_esquerdo_4 = load_texture("imagens/detetive lado esquerdo 4.png", window_Renderer);
+
+	SDL_Texture* detetive_lado_direito_2 = load_texture("imagens/detetive lado direito 2.png", window_Renderer);
+	SDL_Texture* detetive_lado_direito_3 = load_texture("imagens/detetive lado direito 3.png", window_Renderer);
+	SDL_Texture* detetive_lado_direito_4 = load_texture("imagens/detetive lado direito 4.png", window_Renderer);
+
+
+
+	SDL_Rect detetive_Rect; // falta depender de onde veio
+	detetive_Rect.x = grid[8][5].x - 16;
+	detetive_Rect.y = grid[8][7].y - 16;
+	detetive_Rect.w = 64;
+	detetive_Rect.h = 64;
+
+	SDL_Rect detetive_Rect_Hitbox = detetive_Rect;
+	detetive_Rect_Hitbox.x += detetive_Rect.w / 2;
+	detetive_Rect_Hitbox.w /= 48;
+	detetive_Rect_Hitbox.y += detetive_Rect.h / 2;
+	detetive_Rect_Hitbox.h /= 48;
+
+	SDL_Rect texto_Rect;
+	texto_Rect.x = cenario_Width / 2 - 200;
+	texto_Rect.y = cenario_Height / 2 - 100;
+	texto_Rect.w = 400;
+	texto_Rect.h = 200;
+
+	char detetive = 'D';
+	int detetive_Linha = 8;
+	int detetive_Coluna = 5;
+	//-------------------------------------//
+
+	int detetive_Lado = 3;
+	int sobe = 0, desce = 0, esquerda = 0, direita = 0;
+	bool chatBox = false;
+
+	//booleanas de movimento
+	bool esq = false;
+	bool dir = false;
+	bool cima = false;
+	bool baixo = false;
+
+	//contadores de frames
+	int frameDetetive = 0;
+
+
+	//função booleana de execução do loop e criação da variavel atribuida a eventos
+	bool executando = true;
+	SDL_Event click;
+
+	//--Area de criação de retangulos :D --//
+
+
+
+	//--fim da área de criação de retângulos--//
+
+
+	init();
+
+	SDL_RenderCopy(window_Renderer, background_cenario, NULL, NULL);
+	SDL_RenderCopy(window_Renderer, detetive_costa_2, NULL, &detetive_Rect);
+
+	SDL_Texture* hitbox_Texture = load_texture("imagens/fundo preto.png", window_Renderer);
+
+
+	//loop principal do jogo
+	while (executando)
+	{
+		//eventos de comando do teclado/mouse
+		while (SDL_PollEvent(&click))
+		{
+			SDL_RenderCopy(window_Renderer, hitbox_Texture, NULL, &detetive_Rect_Hitbox);
+
+			SDL_RenderPresent(window_Renderer);
+
+			//fechando a janela com ESC ou clique no X
+			if (click.type == SDL_QUIT)
+			{
+				executando = false;
+			}
+
+			switch (click.key.keysym.sym)
+			{
+			case SDLK_ESCAPE:
+				executando = false;
+			}
+
+			if (click.type == SDL_KEYDOWN)
+			{
+				if (click.key.keysym.sym == SDLK_a)
+				{
+					esq = true;
+					detetive_Rect_Hitbox.x = detetive_Rect.x + detetive_Rect.w * 3 / 4;
+				}
+				else if (click.key.keysym.sym == SDLK_d)
+				{
+					dir = true;
+					detetive_Rect_Hitbox.x = detetive_Rect.x + detetive_Rect.w / 4;
+				}
+				else if (click.key.keysym.sym == SDLK_w)
+				{
+					cima = true;
+					detetive_Rect_Hitbox.y = detetive_Rect.y + detetive_Rect.h * 3 / 4;
+				}
+				else if (click.key.keysym.sym == SDLK_s)
+				{
+					baixo = true;
+					detetive_Rect_Hitbox.y = detetive_Rect.y + detetive_Rect.h / 4;
+				}
+				else if (click.key.keysym.sym == SDLK_LEFT)
+				{
+					esq = true;
+					detetive_Rect_Hitbox.x = detetive_Rect.x + detetive_Rect.w * 3 / 4;
+				}
+				else if (click.key.keysym.sym == SDLK_RIGHT)
+				{
+					dir = true;
+					detetive_Rect_Hitbox.x = detetive_Rect.x + detetive_Rect.w / 4;
+				}
+				else if (click.key.keysym.sym == SDLK_UP)
+				{
+					cima = true;
+					detetive_Rect_Hitbox.y = detetive_Rect.y + detetive_Rect.h * 3 / 4;
+				}
+				else if (click.key.keysym.sym == SDLK_DOWN)
+				{
+					baixo = true;
+					detetive_Rect_Hitbox.y = detetive_Rect.y + detetive_Rect.h / 4;
+				}
+			}
+			else if (click.type == SDL_KEYUP)
+			{
+				if (click.key.keysym.sym == SDLK_a)
+				{
+					esq = false;
+					detetive_Rect_Hitbox.x = detetive_Rect.x + detetive_Rect.w / 2;
+					detetive_Lado = 2;
+				}
+				else if (click.key.keysym.sym == SDLK_d)
+				{
+					dir = false;
+					detetive_Rect_Hitbox.x = detetive_Rect.x + detetive_Rect.w / 2;
+					detetive_Lado = 4;
+				}
+				else if (click.key.keysym.sym == SDLK_w)
+				{
+					cima = false;
+					detetive_Rect_Hitbox.y = detetive_Rect.y + detetive_Rect.h / 2;
+					detetive_Lado = 1;
+				}
+				else if (click.key.keysym.sym == SDLK_s)
+				{
+					baixo = false;
+					detetive_Rect_Hitbox.y = detetive_Rect.y + detetive_Rect.h / 2;
+					detetive_Lado = 3;
+				}
+				if (click.key.keysym.sym == SDLK_LEFT)
+				{
+					esq = false;
+					detetive_Rect_Hitbox.x = detetive_Rect.x + detetive_Rect.w / 2;
+					detetive_Lado = 2;
+				}
+				else if (click.key.keysym.sym == SDLK_RIGHT)
+				{
+					dir = false;
+					detetive_Rect_Hitbox.x = detetive_Rect.x + detetive_Rect.w / 2;
+					detetive_Lado = 4;
+				}
+				else if (click.key.keysym.sym == SDLK_UP)
+				{
+					cima = false;
+					detetive_Rect_Hitbox.y = detetive_Rect.y + detetive_Rect.h / 2;
+					detetive_Lado = 1;
+				}
+				else if (click.key.keysym.sym == SDLK_DOWN)
+				{
+					baixo = false;
+					detetive_Rect_Hitbox.y = detetive_Rect.y + detetive_Rect.h / 2;
+					detetive_Lado = 3;
+				}
+			}
+		}
+
+
+
+
+
+
+		//---------------lógica----------------------//
+		//------------------------------------------//
+
+		//---DETETIVE---//
+
+		//movimento do detetive
+		if (esq == true)
+		{
+			if (cenario[detetive_Linha][detetive_Coluna - 1] == '_')
+			{
+				detetive_Rect.x -= 8;
+				detetive_Rect_Hitbox.x -= 8;
+
+				cenario[detetive_Linha][detetive_Coluna] = '_';
+			}
+
+		}
+		else if (dir == true)
+		{
+			if (cenario[detetive_Linha][detetive_Coluna + 1] == '_')
+			{
+				detetive_Rect.x += 8;
+				detetive_Rect_Hitbox.x += 8;
+
+				cenario[detetive_Linha][detetive_Coluna] = '_';
+			}
+
+		}
+		else if (cima == true)
+		{
+			if (cenario[detetive_Linha - 1][detetive_Coluna] == '_')
+			{
+				detetive_Rect.y -= 8;
+				detetive_Rect_Hitbox.y -= 8;
+
+				cenario[detetive_Linha][detetive_Coluna] = '_';
+			}
+
+		}
+		else if (baixo == true)
+		{
+			if (cenario[detetive_Linha + 1][detetive_Coluna] == '_')
+			{
+				detetive_Rect.y += 8;
+				detetive_Rect_Hitbox.y += 8;
+
+				cenario[detetive_Linha][detetive_Coluna] = '_';
+			}
+
+		}
+
+		//--COLISÕES--//
+
+		//colisão do detetive com a tela
+		if (detetive_Rect.x < 0)
+		{
+			detetive_Rect.x = 0;
+		}
+		else if (detetive_Rect.x > SCREEN_WIDTH - detetive_Rect.w)
+		{
+			detetive_Rect.x = SCREEN_WIDTH - detetive_Rect.w;
+		}
+		if (detetive_Rect.y < 0)
+		{
+			detetive_Rect.y = 0;
+		}
+		else if (detetive_Rect.y > SCREEN_HEIGHT - detetive_Rect.h)
+		{
+			detetive_Rect.y = SCREEN_HEIGHT - detetive_Rect.h;
+		}
+
+		//--------renderização---------//
+		//----------------------------//
+
+		//limpa a renderização
+		SDL_RenderClear(window_Renderer);
+
+		//renderiza a textura na tela
+		SDL_RenderCopy(window_Renderer, background_cenario, NULL, NULL);
+
+
+		if (esq)
+		{
+			switch (frameDetetive)
+			{
+			case 0:
+				SDL_RenderCopy(window_Renderer, detetive_lado_esquerdo_2, NULL, &detetive_Rect);
+				break;
+			case 1:
+				SDL_RenderCopy(window_Renderer, detetive_lado_esquerdo_3, NULL, &detetive_Rect);
+				break;
+			case 2:
+				SDL_RenderCopy(window_Renderer, detetive_lado_esquerdo_4, NULL, &detetive_Rect);
+				break;
+			}
+		}
+		else if (dir)
+		{
+			switch (frameDetetive)
+			{
+			case 0:
+				SDL_RenderCopy(window_Renderer, detetive_lado_direito_2, NULL, &detetive_Rect);
+				break;
+			case 1:
+				SDL_RenderCopy(window_Renderer, detetive_lado_direito_3, NULL, &detetive_Rect);
+				break;
+			case 2:
+				SDL_RenderCopy(window_Renderer, detetive_lado_direito_4, NULL, &detetive_Rect);
+				break;
+			}
+		}
+		else if (cima)
+		{
+			switch (frameDetetive)
+			{
+			case 0:
+				SDL_RenderCopy(window_Renderer, detetive_costa_2, NULL, &detetive_Rect);
+				break;
+			case 1:
+				SDL_RenderCopy(window_Renderer, detetive_costa_3, NULL, &detetive_Rect);
+				break;
+			case 2:
+				SDL_RenderCopy(window_Renderer, detetive_costa_4, NULL, &detetive_Rect);
+				break;
+			}
+		}
+		else if (baixo)
+		{
+			switch (frameDetetive)
+			{
+			case 0:
+				SDL_RenderCopy(window_Renderer, detetive_frente_2, NULL, &detetive_Rect);
+				break;
+			case 1:
+				SDL_RenderCopy(window_Renderer, detetive_frente_3, NULL, &detetive_Rect);
+				break;
+			case 2:
+				SDL_RenderCopy(window_Renderer, detetive_frente_4, NULL, &detetive_Rect);
+				break;
+			}
+		}
+		else
+		{
+			if (detetive_Lado == 1)
+			{
+				SDL_RenderCopy(window_Renderer, detetive_costa_3, NULL, &detetive_Rect);
+			}
+			else if (detetive_Lado == 2)
+			{
+				SDL_RenderCopy(window_Renderer, detetive_lado_esquerdo_3, NULL, &detetive_Rect);
+			}
+			else if (detetive_Lado == 3)
+			{
+				SDL_RenderCopy(window_Renderer, detetive_frente_3, NULL, &detetive_Rect);
+			}
+			else if (detetive_Lado == 4)
+			{
+				SDL_RenderCopy(window_Renderer, detetive_lado_direito_3, NULL, &detetive_Rect);
+			}
+		}
+
+		//atualiza a renderização
+		SDL_RenderPresent(window_Renderer);
+
+		frameDetetive+= 1;
+		if (frameDetetive == 3)
+			frameDetetive = 0;
+
+
+		SDL_Delay(50);
+	}
+
+	fechar();
+
+	return 0;
+}
